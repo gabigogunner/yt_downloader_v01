@@ -29,12 +29,12 @@ if baixar_button and arquivo_cookie:
                 'ffmpeg_location': FFMPEG_PATH,
                 'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
                 'remote_components': ['ejs:github'],
-                # Emula clientes móveis para burlar o bloqueio 403 em IPs da nuvem
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android', 'ios', 'mweb']
+                "extractor_args": {
+                    "youtube": {
+                        "player_client": ["mweb", "web_embedded", "android_vr"],
+                        "player_skip": ["web", "web_creator"],
                     }
-                },
+                        },
                 'nocheckcertificate': True,
             }
             
@@ -51,12 +51,13 @@ if baixar_button and arquivo_cookie:
                 'ffmpeg_location': FFMPEG_PATH,
                 'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
                 'remote_components': ['ejs:github'],
-                # Emula clientes móveis para burlar o bloqueio 403 em IPs da nuvem
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android', 'ios', 'mweb']
+                "impersonate": "chrome",  # Burlador de fingerprint TLS para evitar erro 403
+                "extractor_args": {
+                    "youtube": {
+                        "player_client": ["mweb", "web_embedded", "android_vr"],
+                        "player_skip": ["web", "web_creator"],
                     }
-                },
+                        },
                 'nocheckcertificate': True,
             }
         try:
