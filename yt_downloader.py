@@ -8,6 +8,7 @@ import zipfile
 import imageio_ffmpeg
 import streamlit as st
 from yt_dlp import YoutubeDL
+from yt_dlp.networking.impersonate import ImpersonateTarget
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 
@@ -65,8 +66,8 @@ if baixar_button:
             "force_ipv4": True,
             "ignoreerrors": True,  # não trava tudo se 1 de N links falhar
             "no_warnings": False,
-            # Node.js disponível via package.txt -> deixa o yt-dlp resolver
-            # desafios JS (ex: PO token) quando necessário
+            # Node.js está disponível (via package.txt) -> usa pra resolver
+            # desafios JS/PO Token que o YouTube exige com frequência
             "js_runtimes": {"node": {}},
             # Vários clients de fallback: se um for bloqueado/exigir JS, tenta o próximo
             "extractor_args": {
@@ -76,8 +77,15 @@ if baixar_button:
             },
             # Usa curl-cffi (já está no requirements.txt) pra imitar o fingerprint
             # TLS de um navegador real -> reduz bloqueios/erros 403 do YouTube
-            "impersonate": "chrome",
+            # OBS: via biblioteca (diferente do CLI) precisa passar um objeto
+            # ImpersonateTarget, não a string crua "chrome"
+            "impersonate": ImpersonateTarget.from_str("chrome"),
         }
+
+        # Só ativa js_runtimes se o Node.js realmente estiver instalado
+        # (fica disponível no Streamlit Cloud via package.txt)
+        if node_disponivel():
+            formatacao["js_runtimes"] = {"node": {}}
 
         if caminho_cookie:
             formatacao["cookiefile"] = caminho_cookie
