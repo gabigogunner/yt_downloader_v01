@@ -23,12 +23,12 @@ if baixar_button:
   elif not URLS:
     st.warning("Insira pelo menos um link de vídeo.")
   else:
-    # 1. Salva o cookie enviado no disco do servidor
+    # 1. Salva os cookies enviados temporariamente
     with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
       tmp.write(arquivo_cookie.getvalue())
       caminho_cookie = tmp.name
 
-    # 2. Cria pasta temporaria isolada para receber o arquivo baixado
+    # 2. Pasta temporária isolada para receber a mídia
     pasta_download = tempfile.mkdtemp()
     template_saida = os.path.join(pasta_download, "%(title)s.%(ext)s")
 
@@ -39,6 +39,12 @@ if baixar_button:
         "js_runtimes": {"node": {}},
         "remote_components": ["ejs:github"],
         "nocheckcertificate": True,
+        # Bula o bloqueio de IP de datacenter simulando cliente mobile
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["ios", "android", "mweb"],
+            }
+        },
     }
 
     if formato_escolha == "MP4 (Vídeo Melhor Qualidade)":
@@ -55,18 +61,16 @@ if baixar_button:
       }]
 
     try:
-      with st.spinner("Baixando e convertendo no servidor..."):
+      with st.spinner("Processando vídeo no servidor..."):
         with YoutubeDL(formatacao) as ydl:
           ydl.download(URLS)
 
-      # 3. Localiza o arquivo gerado na pasta temporaria
       arquivos_baixados = os.listdir(pasta_download)
 
       if arquivos_baixados:
         nome_arquivo = arquivos_baixados[0]
         caminho_arquivo = os.path.join(pasta_download, nome_arquivo)
 
-        # 4. Entrega o arquivo para o seu navegador baixar
         with open(caminho_arquivo, "rb") as f:
           st.success("Vídeo processado com sucesso!")
           st.download_button(
@@ -78,7 +82,7 @@ if baixar_button:
               else "audio/mpeg",
           )
       else:
-        st.error("O arquivo não foi localizado após o processamento.")
+        st.error("Não foi possível gerar o arquivo final.")
 
     except Exception as e:
       st.error(f"Ocorreu um erro durante o download: {e}")
