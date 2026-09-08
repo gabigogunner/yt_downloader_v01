@@ -3,3 +3,4 @@ git+https://github.com/yt-dlp/yt-dlp.git
 imageio-ffmpeg
 curl-cffi
 yt-dlp-ejs
+nodejs-wheel
