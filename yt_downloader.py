@@ -29,6 +29,13 @@ if baixar_button and arquivo_cookie:
                 'ffmpeg_location': FFMPEG_PATH,
                 'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
                 'remote_components': ['ejs:github'],
+                # Emula clientes móveis para burlar o bloqueio 403 em IPs da nuvem
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'ios', 'mweb']
+                    }
+                },
+                'nocheckcertificate': True,
             }
             
         elif formato_escolha == "MP3 (Apenas Áudio)":
@@ -44,6 +51,13 @@ if baixar_button and arquivo_cookie:
                 'ffmpeg_location': FFMPEG_PATH,
                 'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
                 'remote_components': ['ejs:github'],
+                # Emula clientes móveis para burlar o bloqueio 403 em IPs da nuvem
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'ios', 'mweb']
+                    }
+                },
+                'nocheckcertificate': True,
             }
         try:
             with YoutubeDL(formatacao) as ydl:
