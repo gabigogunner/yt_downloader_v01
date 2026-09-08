@@ -1,17 +1,16 @@
 import streamlit as st
 from yt_dlp import YoutubeDL
+import imageio_ffmpeg
 import tempfile
-import os
+
+FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 
 st.title("Baixador de vídeos do Youtube (liste todos os vídeos por linha)")
 arquivo_cookie = st.file_uploader("Arquivo cookies.txt")
-
 video_txt_area = st.text_area("Link(s) do(s) vídeo(s)", height=200)
 URLS = video_txt_area.split("\n")
 formato_escolha = st.radio("Escolha o formato:", ["MP4 (Vídeo Melhor Qualidade)", "MP3 (Apenas Áudio)"])
 baixar_button = st.button("Baixar")
-
-
 
 if baixar_button and arquivo_cookie:
     if not arquivo_cookie:
@@ -27,6 +26,7 @@ if baixar_button and arquivo_cookie:
                 'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', # Apenas a palavra best, sem símbolos ou barras
                 'outtmpl': '%(title)s.%(ext)s',
                 'cookiefile': caminho_temp,
+                'ffmpeg_location': FFMPEG_PATH,
                 'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
                 'remote_components': ['ejs:github'],
             }
@@ -41,6 +41,7 @@ if baixar_button and arquivo_cookie:
                 }],
                 "outtmpl":"%(title)s.%(ext)s",
                 'cookiefile': caminho_temp,
+                'ffmpeg_location': FFMPEG_PATH,
                 'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
                 'remote_components': ['ejs:github'],
             }
