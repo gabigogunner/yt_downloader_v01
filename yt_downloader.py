@@ -44,6 +44,27 @@ def listar_arquivos_finais(pasta):
     )
 
 
+class CapturaLog:
+    """Guarda as mensagens internas do yt-dlp pra exibir em caso de falha."""
+
+    def __init__(self):
+        self.mensagens = []
+
+    def debug(self, msg):
+        if msg.startswith("[debug] "):
+            return
+        self.mensagens.append(msg)
+
+    def info(self, msg):
+        self.mensagens.append(msg)
+
+    def warning(self, msg):
+        self.mensagens.append(f"AVISO: {msg}")
+
+    def error(self, msg):
+        self.mensagens.append(f"ERRO: {msg}")
+
+
 if baixar_button:
     if not URLS:
         st.warning("Insira pelo menos um link de vídeo.")
