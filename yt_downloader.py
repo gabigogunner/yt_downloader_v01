@@ -79,6 +79,7 @@ if baixar_button:
 
         pasta_download = tempfile.mkdtemp()
         template_saida = os.path.join(pasta_download, "%(title)s.%(ext)s")
+        captura_log = CapturaLog()
 
         formatacao = {
             "outtmpl": template_saida,
@@ -87,6 +88,7 @@ if baixar_button:
             "force_ipv4": True,
             "ignoreerrors": True,  # não trava tudo se 1 de N links falhar
             "no_warnings": False,
+            "logger": captura_log,
             # Node.js está disponível (via package.txt) -> usa pra resolver
             # desafios JS/PO Token que o YouTube exige com frequência
             "js_runtimes": {"node": {}},
@@ -138,6 +140,11 @@ if baixar_button:
                     "sem cookies, ou tente novamente (o YouTube às vezes bloqueia "
                     "temporariamente o servidor)."
                 )
+                with st.expander("Detalhes técnicos do erro"):
+                    if captura_log.mensagens:
+                        st.code("\n".join(captura_log.mensagens))
+                    else:
+                        st.write("Nenhuma mensagem capturada do yt-dlp.")
             elif len(arquivos_baixados) == 1:
                 nome_arquivo = arquivos_baixados[0]
                 caminho_arquivo = os.path.join(pasta_download, nome_arquivo)
@@ -173,6 +180,8 @@ if baixar_button:
         except Exception as e:
             st.error(f"Ocorreu um erro durante o download: {e}")
             with st.expander("Detalhes técnicos do erro"):
+                if captura_log.mensagens:
+                    st.code("\n".join(captura_log.mensagens))
                 st.code(traceback.format_exc())
 
         finally:
