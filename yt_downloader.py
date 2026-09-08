@@ -6,10 +6,10 @@ from yt_dlp import YoutubeDL
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 
-st.title("Baixador de vídeos do Youtube (liste todos os vídeos por linha)")
+st.title("Baixador de vídeos do Youtube")
 
-arquivo_cookie = st.file_uploader("Arquivo cookies.txt")
-video_txt_area = st.text_area("Link(s) do(s) vídeo(s)", height=200)
+arquivo_cookie = st.file_uploader("Arquivo cookies.txt (Opcional/Recomendado para restrições)")
+video_txt_area = st.text_area("Link(s) do(s) vídeo(s)", height=150)
 URLS = [url.strip() for url in video_txt_area.split("\n") if url.strip()]
 
 formato_escolha = st.radio(
@@ -18,34 +18,37 @@ formato_escolha = st.radio(
 baixar_button = st.button("Processar Vídeo")
 
 if baixar_button:
-  if not arquivo_cookie:
-    st.warning("Arquivo cookie necessário!")
-  elif not URLS:
+  if not URLS:
     st.warning("Insira pelo menos um link de vídeo.")
   else:
-    # 1. Salva os cookies enviados temporariamente
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
-      tmp.write(arquivo_cookie.getvalue())
-      caminho_cookie = tmp.name
+    caminho_cookie = None
 
-    # 2. Pasta temporária isolada para receber a mídia
+    # Save cookie if uploaded
+    if arquivo_cookie:
+      with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
+        tmp.write(arquivo_cookie.getvalue())
+        caminho_cookie = tmp.name
+
     pasta_download = tempfile.mkdtemp()
     template_saida = os.path.join(pasta_download, "%(title)s.%(ext)s")
 
     formatacao = {
         "outtmpl": template_saida,
-        "cookiefile": caminho_cookie,
         "ffmpeg_location": FFMPEG_PATH,
-        "js_runtimes": {"node": {}},
-        "remote_components": ["ejs:github"],
         "nocheckcertificate": True,
-        # Bula o bloqueio de IP de datacenter simulando cliente mobile
+        "force_ipv4": True,
+        # Personifica o navegador Chrome usando curl-cffi
+        "impersonate": "chrome",
+        # Altera os clientes para evitar o 403 nos servidores do googlevideo
         "extractor_args": {
             "youtube": {
-                "player_client": ["ios", "android", "mweb"],
+                "player_client": ["mweb", "web", "tv"],
             }
         },
     }
+
+    if caminho_cookie:
+      formatacao["cookiefile"] = caminho_cookie
 
     if formato_escolha == "MP4 (Vídeo Melhor Qualidade)":
       formatacao["format"] = (
@@ -88,5 +91,5 @@ if baixar_button:
       st.error(f"Ocorreu um erro durante o download: {e}")
 
     finally:
-      if os.path.exists(caminho_cookie):
+      if caminho_cookie and os.path.exists(caminho_cookie):
         os.remove(caminho_cookie)
