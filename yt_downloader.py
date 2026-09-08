@@ -6,9 +6,11 @@ from yt_dlp import YoutubeDL
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 
-st.title("Baixador de vídeos do Youtube")
+st.title("Baixador de vídeos do YouTube")
 
-arquivo_cookie = st.file_uploader("Arquivo cookies.txt (Opcional/Recomendado para restrições)")
+arquivo_cookie = st.file_uploader(
+    "Arquivo cookies.txt (Apenas para vídeos com restrição de idade)"
+)
 video_txt_area = st.text_area("Link(s) do(s) vídeo(s)", height=150)
 URLS = [url.strip() for url in video_txt_area.split("\n") if url.strip()]
 
@@ -23,7 +25,7 @@ if baixar_button:
   else:
     caminho_cookie = None
 
-    # Save cookie if uploaded
+    # Processa o arquivo de cookie apenas se enviado pelo usuário
     if arquivo_cookie:
       with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
         tmp.write(arquivo_cookie.getvalue())
@@ -37,12 +39,10 @@ if baixar_button:
         "ffmpeg_location": FFMPEG_PATH,
         "nocheckcertificate": True,
         "force_ipv4": True,
-        # Personifica o navegador Chrome usando curl-cffi
-        "impersonate": "chrome",
-        # Altera os clientes para evitar o 403 nos servidores do googlevideo
+        # Usa clientes com menor índice de bloqueio 403 em datacenters
         "extractor_args": {
             "youtube": {
-                "player_client": ["mweb", "web", "tv"],
+                "player_client": ["tv", "web_embedded", "android"],
             }
         },
     }
