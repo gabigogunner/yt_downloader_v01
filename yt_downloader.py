@@ -1,70 +1,88 @@
+import os
+import tempfile
+import imageio_ffmpeg
 import streamlit as st
 from yt_dlp import YoutubeDL
-import imageio_ffmpeg
-import tempfile
 
 FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 
 st.title("Baixador de vídeos do Youtube (liste todos os vídeos por linha)")
+
 arquivo_cookie = st.file_uploader("Arquivo cookies.txt")
 video_txt_area = st.text_area("Link(s) do(s) vídeo(s)", height=200)
-URLS = video_txt_area.split("\n")
-formato_escolha = st.radio("Escolha o formato:", ["MP4 (Vídeo Melhor Qualidade)", "MP3 (Apenas Áudio)"])
-baixar_button = st.button("Baixar")
+URLS = [url.strip() for url in video_txt_area.split("\n") if url.strip()]
 
-if baixar_button and arquivo_cookie:
-    if not arquivo_cookie:
-        st.warning("Arquivo cookie necessário! Leia a documentação para saber onde adquirir.")
+formato_escolha = st.radio(
+    "Escolha o formato:", ["MP4 (Vídeo Melhor Qualidade)", "MP3 (Apenas Áudio)"]
+)
+baixar_button = st.button("Processar Vídeo")
+
+if baixar_button:
+  if not arquivo_cookie:
+    st.warning("Arquivo cookie necessário!")
+  elif not URLS:
+    st.warning("Insira pelo menos um link de vídeo.")
+  else:
+    # 1. Salva o cookie enviado no disco do servidor
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
+      tmp.write(arquivo_cookie.getvalue())
+      caminho_cookie = tmp.name
+
+    # 2. Cria pasta temporaria isolada para receber o arquivo baixado
+    pasta_download = tempfile.mkdtemp()
+    template_saida = os.path.join(pasta_download, "%(title)s.%(ext)s")
+
+    formatacao = {
+        "outtmpl": template_saida,
+        "cookiefile": caminho_cookie,
+        "ffmpeg_location": FFMPEG_PATH,
+        "js_runtimes": {"node": {}},
+        "remote_components": ["ejs:github"],
+        "nocheckcertificate": True,
+    }
+
+    if formato_escolha == "MP4 (Vídeo Melhor Qualidade)":
+      formatacao["format"] = (
+          "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best"
+      )
+      formatacao["merge_output_format"] = "mp4"
     else:
-        # 1. Escreve os bytes do upload em um arquivo temporário no disco
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
-            tmp.write(arquivo_cookie.getvalue())
-            caminho_temp = tmp.name
-        formatacao = {}
-        if formato_escolha == "MP4 (Vídeo Melhor Qualidade)":
-            formatacao = {
-                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best', # Apenas a palavra best, sem símbolos ou barras
-                'outtmpl': '%(title)s.%(ext)s',
-                'cookiefile': caminho_temp,
-                'ffmpeg_location': FFMPEG_PATH,
-                'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
-                'remote_components': ['ejs:github'],
-                "extractor_args": {
-                    "youtube": {
-                        "player_client": ["mweb", "web_embedded", "android_vr"],
-                        "player_skip": ["web", "web_creator"],
-                    }
-                        },
-                'nocheckcertificate': True,
-            }
-            
-        elif formato_escolha == "MP3 (Apenas Áudio)":
-            formatacao = {
-                "format":"bestaudio/best",
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192', # Qualidade do mp3 (192kbps)
-                }],
-                "outtmpl":"%(title)s.%(ext)s",
-                'cookiefile': caminho_temp,
-                'ffmpeg_location': FFMPEG_PATH,
-                'js_runtimes': {'node': {}},          # Força o yt-dlp a usar o Node.js
-                'remote_components': ['ejs:github'],
-                "impersonate": "chrome",  # Burlador de fingerprint TLS para evitar erro 403
-                "extractor_args": {
-                    "youtube": {
-                        "player_client": ["mweb", "web_embedded", "android_vr"],
-                        "player_skip": ["web", "web_creator"],
-                    }
-                        },
-                'nocheckcertificate': True,
-            }
-        try:
-            with YoutubeDL(formatacao) as ydl:
-                ydl.download(URLS)
-                baixar_button = False        
-                st.success("Download concluído com sucesso!")
-            
-        except Exception as e:
-            st.error(f"Ocorreu um erro durante o download: {e}")
+      formatacao["format"] = "bestaudio/best"
+      formatacao["postprocessors"] = [{
+          "key": "FFmpegExtractAudio",
+          "preferredcodec": "mp3",
+          "preferredquality": "192",
+      }]
+
+    try:
+      with st.spinner("Baixando e convertendo no servidor..."):
+        with YoutubeDL(formatacao) as ydl:
+          ydl.download(URLS)
+
+      # 3. Localiza o arquivo gerado na pasta temporaria
+      arquivos_baixados = os.listdir(pasta_download)
+
+      if arquivos_baixados:
+        nome_arquivo = arquivos_baixados[0]
+        caminho_arquivo = os.path.join(pasta_download, nome_arquivo)
+
+        # 4. Entrega o arquivo para o seu navegador baixar
+        with open(caminho_arquivo, "rb") as f:
+          st.success("Vídeo processado com sucesso!")
+          st.download_button(
+              label=f"⬇️ Baixar {nome_arquivo}",
+              data=f,
+              file_name=nome_arquivo,
+              mime="video/mp4"
+              if formato_escolha.startswith("MP4")
+              else "audio/mpeg",
+          )
+      else:
+        st.error("O arquivo não foi localizado após o processamento.")
+
+    except Exception as e:
+      st.error(f"Ocorreu um erro durante o download: {e}")
+
+    finally:
+      if os.path.exists(caminho_cookie):
+        os.remove(caminho_cookie)

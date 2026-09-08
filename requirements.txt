@@ -1,4 +1,3 @@
 streamlit
-yt-dlp[curl-cffi]
+yt-dlp
 imageio-ffmpeg
-curl-cffi
