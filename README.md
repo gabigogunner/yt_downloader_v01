@@ -4,9 +4,9 @@ App para download de MP4 e MP3 em massa, com maior qualidade.
 # Funcionamento
 1 - Colar os links do Youtube, por quebra de linha, sem espaço vazio. Exemplo:
 
-https://www.youtube.com/watch?link1
-https://www.youtube.com/watch?link2
-https://www.youtube.com/watch?link3
+https://www.youtube.com/watch?link1<br>
+https://www.youtube.com/watch?link2<br>
+https://www.youtube.com/watch?link3<br>
 
 2 - Selecionar o formato desejado
 
