@@ -9,7 +9,7 @@ FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
 st.title("Baixador de vídeos do YouTube")
 
 arquivo_cookie = st.file_uploader(
-    "Arquivo cookies.txt (Apenas para vídeos com restrição de idade)"
+    "Arquivo cookies.txt (Opcional - Apenas se o vídeo exigir login)"
 )
 video_txt_area = st.text_area("Link(s) do(s) vídeo(s)", height=150)
 URLS = [url.strip() for url in video_txt_area.split("\n") if url.strip()]
@@ -25,7 +25,7 @@ if baixar_button:
   else:
     caminho_cookie = None
 
-    # Processa o arquivo de cookie apenas se enviado pelo usuário
+    # Processa o arquivo de cookie apenas se o usuário enviou um novo
     if arquivo_cookie:
       with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as tmp:
         tmp.write(arquivo_cookie.getvalue())
@@ -39,10 +39,12 @@ if baixar_button:
         "ffmpeg_location": FFMPEG_PATH,
         "nocheckcertificate": True,
         "force_ipv4": True,
-        # Usa clientes com menor índice de bloqueio 403 em datacenters
+        # Define o Node.js como runtime de JavaScript
+        "js_runtimes": {"node": {}},
+        # Utiliza os clientes com maior taxa de sucesso em servidores de nuvem
         "extractor_args": {
             "youtube": {
-                "player_client": ["tv", "web_embedded", "android"],
+                "player_client": ["web_embedded", "tv"],
             }
         },
     }
